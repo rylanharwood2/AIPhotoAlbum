@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  body { background-color: #0e0d0b; color: #f0e6d3; font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6) sepia(1) hue-rotate(5deg) saturate(0.8); }
+}
+
+@layer components {
+  .btn-primary { @apply bg-film-amber hover:bg-film-gold text-film-bg font-body font-medium px-6 py-2.5 rounded transition-colors duration-200 text-sm tracking-wide; }
+  .btn-ghost { @apply border border-film-border hover:border-film-muted text-film-muted hover:text-film-cream px-6 py-2.5 rounded transition-colors duration-200 text-sm tracking-wide; }
+  .card { @apply bg-film-surface border border-film-border rounded-lg; }
+  .input { @apply bg-film-bg border border-film-border rounded px-3 py-2 text-film-cream text-sm font-mono focus:outline-none focus:border-film-amber transition-colors duration-200 w-full placeholder-film-muted; }
+  .label { @apply text-xs text-film-muted uppercase tracking-widest font-body mb-1.5 block; }
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #0e0d0b; }
+::-webkit-scrollbar-thumb { background: #2e2b24; border-radius: 2px; }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.fade-up { animation: fadeUp 0.4s ease forwards; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.fade-in { animation: fadeIn 0.3s ease forwards; }
+
+.photo-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.photo-card:hover { transform: scale(1.02); box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+
+@keyframes pulse-amber { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.pulse-amber { animation: pulse-amber 1.5s ease-in-out infinite; }
