@@ -6,7 +6,7 @@ Triproll uses Claude AI to automatically curate the best photos from your trips 
 
 ## Architecture
 
-- **Frontend:** React + Vite + Tailwind CSS → hosted on **Vercel** (free)
+- **Frontend:** React + Vite + Tailwind CSS → hosted on **Netlify** (free)
 - **Backend:** Node.js + Express → hosted on **Render** (free tier)
 - **Database:** Supabase (Postgres) → stores users, trips, photo metadata
 - **Photo storage:** Cloudinary → stores actual photo files
@@ -70,7 +70,7 @@ You'll need accounts on five services. All have free tiers.
    - **Build command:** `npm install`
    - **Start command:** `npm start`
    - **Instance type:** Free
-5. Add these **Environment Variables** (in Render dashboard → Environment):
+5. Add these **Environment Variables** in the Render dashboard under Environment:
 
 ```
 GOOGLE_CLIENT_ID=...
@@ -83,32 +83,34 @@ CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
 ANTHROPIC_API_KEY=...
 SESSION_SECRET=pick_a_long_random_string_at_least_32_characters
-FRONTEND_URL=https://your-vercel-url.vercel.app
+FRONTEND_URL=https://your-netlify-url.netlify.app
 NODE_ENV=production
 ```
 
 6. Deploy. Note your Render URL (e.g. `https://triproll-backend.onrender.com`)
 
-### 6. Deploy the frontend to Vercel
+### 6. Deploy the frontend to Netlify
 
-1. Go to [vercel.com](https://vercel.com) and connect your GitHub account
-2. New Project → import your repo
+1. Go to [netlify.com](https://netlify.com) and connect your GitHub account
+2. Click **Add new site → Import an existing project** → select your repo
 3. Settings:
-   - **Root directory:** leave blank (or set to `/` — the frontend is at the root)
-   - **Framework Preset:** Vite
-4. Add these **Environment Variables** (in Vercel dashboard → Settings → Environment Variables):
+   - **Base directory:** leave blank (frontend is at the repo root)
+   - **Build command:** `npm run build`
+   - **Publish directory:** `dist`
+   - Netlify will detect these automatically from `netlify.toml`
+4. Add these **Environment Variables** under Site Settings → Environment Variables:
 
 ```
 VITE_API_URL=https://your-render-url.onrender.com
 VITE_GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
 ```
 
-5. Deploy. Note your Vercel URL (e.g. `https://triproll.vercel.app`)
-6. Go back to Google Cloud Console and add your Vercel URL as an **Authorised JavaScript origin** on your OAuth client
+5. Deploy. Note your Netlify URL (e.g. `https://triproll.netlify.app`)
+6. Go back to Google Cloud Console and add your Netlify URL as an **Authorised JavaScript origin** on your OAuth client
 
 ### 7. Final wiring
 
-- In Render: update `FRONTEND_URL` to your actual Vercel URL
+- In Render: update `FRONTEND_URL` to your actual Netlify URL and redeploy
 - In Google Cloud Console: make sure your Render `/auth/callback` URL is in the redirect URIs
 
 ---
@@ -143,7 +145,7 @@ Make sure `http://localhost:3001/auth/callback` is added as a redirect URI in Go
 ## Rate Limiting
 
 - **$3/day** total Claude API spend across all users
-- **200 requests per 15 minutes** per IP address (covers the whole backend)
+- **200 requests per 15 minutes** per IP address
 - When the daily limit is hit, users see a friendly message and can try again tomorrow
 - You can adjust `DAILY_CAP_USD` in `backend/middleware/rateLimit.js`
 
@@ -151,12 +153,12 @@ Make sure `http://localhost:3001/auth/callback` is added as a redirect URI in Go
 
 ## Cost Estimate
 
-A typical analysis of 30 photos costs roughly **$0.10–0.30** in Claude API usage depending on how many duplicate groups need reviewing. At the $3/day cap, that's roughly 10–30 analyses per day before the limit kicks in.
+A typical analysis of 30 photos costs roughly **$0.10–0.30** in Claude API usage. At the $3/day cap, that's roughly 10–30 analyses per day before the limit kicks in.
 
 ---
 
 ## Notes
 
-- The Render free tier spins down after 15 minutes of inactivity. First sign-in after a period of no use may take 30–60 seconds while Render cold-starts the backend. This is normal.
+- The Render free tier spins down after 15 minutes of inactivity. The first sign-in after a quiet period may take 30–60 seconds while Render cold-starts. This is normal.
 - Google Photos Picker URLs expire after ~60 minutes. Photos are uploaded to Cloudinary immediately so they're permanently available after that.
 - Cloudinary free tier: 25GB storage, 25GB bandwidth/month. A typical trip of 25 full-size photos is ~50–100MB.
