@@ -8,7 +8,6 @@ const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo'
 
-// Scopes: identity + Google Photos picker
 const SCOPES = [
   'openid',
   'email',
@@ -16,14 +15,12 @@ const SCOPES = [
   'https://www.googleapis.com/auth/photospicker.mediaitems.readonly',
 ].join(' ')
 
-// Session duration: 30 days
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000
 
 // Step 1: Redirect user to Google
 router.get('/google', (req, res) => {
   const state = uuidv4()
-  // Store state in a short-lived cookie for CSRF protection
-  res.cookie('oauth_state', state, { httpOnly: true, maxAge: 10 * 60 * 1000, sameSite: 'lax' })
+  res.cookie('oauth_state', state, { httpOnly: true, maxAge: 10 * 60 * 1000, sameSite: 'none', secure: true })
 
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID,
@@ -46,14 +43,12 @@ router.get('/callback', async (req, res) => {
     return res.redirect(`${process.env.FRONTEND_URL}?error=${encodeURIComponent(error)}`)
   }
 
-  // Verify state matches to prevent CSRF
   if (state !== req.cookies?.oauth_state) {
     return res.redirect(`${process.env.FRONTEND_URL}?error=state_mismatch`)
   }
   res.clearCookie('oauth_state')
 
   try {
-    // Exchange code for tokens
     const tokenRes = await axios.post(GOOGLE_TOKEN_URL, new URLSearchParams({
       code,
       client_id: process.env.GOOGLE_CLIENT_ID,
@@ -64,14 +59,12 @@ router.get('/callback', async (req, res) => {
 
     const { access_token, refresh_token } = tokenRes.data
 
-    // Get user info from Google
     const userRes = await axios.get(GOOGLE_USERINFO_URL, {
       headers: { Authorization: `Bearer ${access_token}` },
     })
 
     const { id: googleId, email, name, picture } = userRes.data
 
-    // Upsert user in Supabase
     const { data: user } = await supabase
       .from('users')
       .upsert(
@@ -81,13 +74,11 @@ router.get('/callback', async (req, res) => {
       .select()
       .single()
 
-    // Store Google tokens against the user for Picker API calls
     await supabase
       .from('users')
       .update({ google_access_token: access_token, google_refresh_token: refresh_token })
       .eq('id', user.id)
 
-    // Create a session token
     const sessionToken = uuidv4()
     const expiresAt = new Date(Date.now() + SESSION_DURATION_MS).toISOString()
 
@@ -97,15 +88,9 @@ router.get('/callback', async (req, res) => {
       expires_at: expiresAt,
     })
 
-    // Set session cookie
-    res.cookie('session', sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
-      maxAge: SESSION_DURATION_MS,
-    })
-
-    res.redirect(process.env.FRONTEND_URL)
+    // Pass token in URL so frontend can store it in localStorage
+    // This avoids cross-domain cookie issues between Netlify and Render
+    res.redirect(`${process.env.FRONTEND_URL}?token=${sessionToken}`)
   } catch (err) {
     console.error('Auth callback error:', err.message)
     res.redirect(`${process.env.FRONTEND_URL}?error=auth_failed`)
@@ -125,15 +110,13 @@ router.get('/me', (req, res) => {
 
 // Logout
 router.post('/logout', async (req, res) => {
-  const token = req.cookies?.session
+  const token = req.cookies?.session || req.headers.authorization?.replace('Bearer ', '')
   if (token) {
     await supabase.from('sessions').delete().eq('token', token)
     res.clearCookie('session')
   }
   res.json({ success: true })
 })
-
-module.exports = router
 
 // Return the user's Google access token for use with the Photos Picker API
 router.get('/google-token', async (req, res) => {
@@ -151,3 +134,6 @@ router.get('/google-token', async (req, res) => {
 
   res.json({ accessToken: user.google_access_token })
 })
+
+// module.exports must be at the very end so all routes above are registered
+module.exports = router

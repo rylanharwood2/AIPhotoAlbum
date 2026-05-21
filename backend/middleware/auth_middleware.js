@@ -1,9 +1,10 @@
 const supabase = require('../db/supabase')
 
-// Attaches req.user if a valid session cookie is present
-// Pass requireAuth=true to return 401 if not logged in
+// Reads session token from either:
+// 1. Authorization header (Bearer token) — used in production cross-domain
+// 2. Cookie — used as fallback for same-domain setups
 async function authMiddleware(req, res, next) {
-  const token = req.cookies?.session
+  const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.session
 
   if (!token) {
     req.user = null
@@ -18,7 +19,6 @@ async function authMiddleware(req, res, next) {
     .single()
 
   if (!session) {
-    // Clear the stale cookie
     res.clearCookie('session')
     req.user = null
     return next()

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { getMe, getTrips, getLoginUrl } from './utils/api.js'
+import { getMe, getTrips, getLoginUrl, saveToken, clearToken, getAnalysis, deletePhotos } from './utils/api.js'
 
 import LoginScreen from './components/LoginScreen.jsx'
 import TripsScreen from './components/TripsScreen.jsx'
@@ -19,8 +19,15 @@ export default function App() {
     if (initRan.current) return
     initRan.current = true
 
-    // Check for auth error from OAuth redirect
     const params = new URLSearchParams(window.location.search)
+
+    // After Google login, the backend redirects here with ?token=...
+    // Save it to localStorage so all future requests can send it as a header
+    if (params.has('token')) {
+      saveToken(params.get('token'))
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
+
     if (params.has('error')) {
       setAuthError('Sign-in failed: ' + params.get('error') + '. Please try again.')
       window.history.replaceState({}, document.title, window.location.pathname)
@@ -51,6 +58,7 @@ export default function App() {
   }
 
   const handleSignOut = async () => {
+    clearToken()
     await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/auth/logout`, {
       method: 'POST',
       credentials: 'include',
@@ -70,9 +78,8 @@ export default function App() {
 
   const handleSelectTrip = async (trip) => {
     setActiveTrip(trip)
-    // Check if this trip already has curated photos
     try {
-      const { curatedPhotos } = await import('./utils/api.js').then(m => m.getAnalysis(trip.id))
+      const { curatedPhotos } = await getAnalysis(trip.id)
       if (curatedPhotos && curatedPhotos.length > 0) {
         setScreen('album')
         return
@@ -83,7 +90,7 @@ export default function App() {
 
   const handleReupload = async () => {
     if (activeTrip) {
-      await import('./utils/api.js').then(m => m.deletePhotos(activeTrip.id))
+      await deletePhotos(activeTrip.id)
     }
     setScreen('photos')
   }

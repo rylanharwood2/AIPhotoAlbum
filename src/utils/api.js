@@ -1,12 +1,29 @@
-// All calls to the Triproll backend
-// VITE_API_URL is set in your Vercel environment variables
-
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
+// Token stored in localStorage so it survives page refreshes
+// and works cross-domain without cookie restrictions
+export function getToken() {
+  return localStorage.getItem('session_token')
+}
+
+export function saveToken(token) {
+  localStorage.setItem('session_token', token)
+}
+
+export function clearToken() {
+  localStorage.removeItem('session_token')
+}
+
 async function request(path, options = {}) {
+  const token = getToken()
   const res = await fetch(`${BASE}${path}`, {
-    credentials: 'include', // send session cookie on every request
-    headers: { 'Content-Type': 'application/json', ...options.headers },
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      // Send token as Authorization header — works cross-domain unlike cookies
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    },
     ...options,
   })
 
@@ -35,21 +52,25 @@ export const deleteTrip = (id) => request(`/trips/${id}`, { method: 'DELETE' })
 
 // Photos
 export const getPhotos = (tripId) => request(`/photos/${tripId}`)
+export const getAnalysis = (tripId) => request(`/analyze/${tripId}`)
 export const deletePhotos = (tripId) => request(`/photos/${tripId}`, { method: 'DELETE' })
 
-// Upload from disk — sends as multipart form data
+// Upload from disk
 export async function uploadPhotosFromDisk(tripId, files) {
+  const token = getToken()
   const form = new FormData()
   for (const file of files) {
     form.append('photos', file)
-    // Include timestamp as a separate field so the server can store it
     form.append(`timestamp_${file.name}`, new Date(file.lastModified).toISOString())
   }
 
   const res = await fetch(`${BASE}/photos/${tripId}/upload`, {
     method: 'POST',
     credentials: 'include',
-    body: form, // Don't set Content-Type — browser sets multipart boundary automatically
+    headers: {
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+    body: form,
   })
 
   if (!res.ok) {
@@ -65,11 +86,13 @@ export const importFromPicker = (tripId, photos) =>
 
 // Analysis — returns an EventSource for live progress
 export function runAnalysis(tripId) {
-  return new EventSource(`${BASE}/analyze/${tripId}/run`, { withCredentials: true })
+  const token = getToken()
+  // EventSource doesn't support custom headers, so we pass token as query param
+  return new EventSource(`${BASE}/analyze/${tripId}/run?token=${token}`, { withCredentials: true })
 }
 
-// Get saved analysis
-export const getAnalysis = (tripId) => request(`/analyze/${tripId}`)
-
-// Download zip — just navigate to this URL
-export const getDownloadUrl = (tripId) => `${BASE}/analyze/${tripId}/download`
+// Download zip
+export const getDownloadUrl = (tripId) => {
+  const token = getToken()
+  return `${BASE}/analyze/${tripId}/download?token=${token}`
+}

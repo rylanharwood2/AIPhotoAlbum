@@ -7,6 +7,14 @@ const { requireAuth } = require('../middleware/auth')
 const { checkRateLimit } = require('../middleware/rateLimit')
 const { groupCandidateDuplicates, analyzeGroup, curateSelection } = require('../services/claude')
 
+// For EventSource routes, token may come as query param instead of header
+router.use(async (req, res, next) => {
+  if (req.query.token && !req.headers.authorization) {
+    req.headers.authorization = `Bearer ${req.query.token}`
+  }
+  next()
+})
+
 router.use(requireAuth)
 
 // Get saved analysis for a trip
