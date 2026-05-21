@@ -78,6 +78,8 @@ router.get('/callback', async (req, res) => {
       .eq('google_id', googleId)
       .single()
 
+    console.log('user fetch result:', user, userError)
+
     await supabase
       .from('users')
       .update({ google_access_token: access_token, google_refresh_token: refresh_token })
