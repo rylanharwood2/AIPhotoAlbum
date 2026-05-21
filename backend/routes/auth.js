@@ -65,13 +65,17 @@ router.get('/callback', async (req, res) => {
 
     const { id: googleId, email, name, picture } = userRes.data
 
-    const { data: user } = await supabase
+    await supabase
       .from('users')
       .upsert(
         { google_id: googleId, email, name, avatar_url: picture },
-        { onConflict: 'google_id', ignoreDuplicates: false }
+        { onConflict: 'google_id' }
       )
+
+    const { data: user } = await supabase
+      .from('users')
       .select()
+      .eq('google_id', googleId)
       .single()
 
     await supabase
