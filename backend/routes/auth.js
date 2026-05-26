@@ -74,6 +74,8 @@ router.get('/callback', async (req, res) => {
         { onConflict: 'google_id' }
       )
 
+    console.log('upsert error:', JSON.stringify(upsertError))
+
     const { data: user } = await supabase
       .from('users')
       .select()
