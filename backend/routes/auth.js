@@ -72,11 +72,14 @@ router.get('/callback', async (req, res) => {
       .single()
 
     if (!user) {
-      const { data: newUser } = await supabase
+      const { data: newUser, error: insertError } = await supabase
         .from('users')
         .insert({ google_id: googleId, email, name, avatar_url: picture })
         .select()
         .single()
+      
+      console.log('insert result:', newUser ? 'got user' : 'null', insertError ? insertError.message : 'no error')
+      
       user = newUser
     } else {
       await supabase
@@ -85,7 +88,7 @@ router.get('/callback', async (req, res) => {
         .eq('google_id', googleId)
     }
 
-    
+        
 
     await supabase
       .from('users')
