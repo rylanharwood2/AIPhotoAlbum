@@ -80,7 +80,7 @@ router.get('/callback', async (req, res) => {
       .eq('google_id', googleId)
       .single()
 
-    console.log('user fetch result:', JSON.stringify(user), JSON.stringify(userError))
+    
 
     await supabase
       .from('users')
