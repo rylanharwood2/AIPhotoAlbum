@@ -57,6 +57,8 @@ router.get('/callback', async (req, res) => {
       grant_type: 'authorization_code',
     }), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
 
+    console.log('token exchange result:', tokenRes.data)
+
     const { access_token, refresh_token } = tokenRes.data
 
     const userRes = await axios.get(GOOGLE_USERINFO_URL, {
@@ -98,7 +100,7 @@ router.get('/callback', async (req, res) => {
     // This avoids cross-domain cookie issues between Netlify and Render
     res.redirect(`${process.env.FRONTEND_URL}?token=${sessionToken}`)
   } catch (err) {
-    console.error('Auth callback error:', err.message)
+    console.error('Auth callback error:', err)//.message)
     res.redirect(`${process.env.FRONTEND_URL}?error=auth_failed`)
   }
 })
