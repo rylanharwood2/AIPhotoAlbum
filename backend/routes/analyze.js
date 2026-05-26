@@ -40,7 +40,7 @@ router.get('/:tripId', async (req, res) => {
 
 // Run Claude analysis on a trip's photos
 // Returns SSE stream so the frontend can show live progress
-router.post('/:tripId/run', async (req, res) => {
+router.get('/:tripId/run', async (req, res) => {
   const { tripId } = req.params
 
   const { data: trip } = await supabase
