@@ -4,7 +4,7 @@ const supabase = require('../db/supabase')
 // 1. Authorization header (Bearer token) — used in production cross-domain
 // 2. Cookie — used as fallback for same-domain setups
 async function authMiddleware(req, res, next) {
-  const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.session
+  const token = req.headers.authorization?.replace('Bearer ', '') || req.tokenFromQuery || req.cookies?.session
 
   if (!token) {
     req.user = null
