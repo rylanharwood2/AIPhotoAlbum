@@ -67,7 +67,7 @@ router.get('/callback', async (req, res) => {
 
     const { id: googleId, email, name, picture } = userRes.data
 
-    await supabase
+    const { error: upsertError } = await supabase
       .from('users')
       .upsert(
         { google_id: googleId, email, name, avatar_url: picture },
@@ -75,7 +75,7 @@ router.get('/callback', async (req, res) => {
       )
 
     console.log('upsert error:', JSON.stringify(upsertError))
-
+    
     const { data: user } = await supabase
       .from('users')
       .select()
