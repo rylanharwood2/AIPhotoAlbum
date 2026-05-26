@@ -57,8 +57,6 @@ router.get('/callback', async (req, res) => {
       grant_type: 'authorization_code',
     }), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
 
-    console.log('token exchange result:', tokenRes.data)
-
     const { access_token, refresh_token } = tokenRes.data
 
     const userRes = await axios.get(GOOGLE_USERINFO_URL, {
@@ -67,20 +65,25 @@ router.get('/callback', async (req, res) => {
 
     const { id: googleId, email, name, picture } = userRes.data
 
-    const { error: upsertError } = await supabase
-      .from('users')
-      .upsert(
-        { google_id: googleId, email, name, avatar_url: picture },
-        { onConflict: 'google_id' }
-      )
-
-    console.log('upsert error:', JSON.stringify(upsertError))
-    
-    const { data: user } = await supabase
+    let { data: user } = await supabase
       .from('users')
       .select()
       .eq('google_id', googleId)
       .single()
+
+    if (!user) {
+      const { data: newUser } = await supabase
+        .from('users')
+        .insert({ google_id: googleId, email, name, avatar_url: picture })
+        .select()
+        .single()
+      user = newUser
+    } else {
+      await supabase
+        .from('users')
+        .update({ email, name, avatar_url: picture })
+        .eq('google_id', googleId)
+    }
 
     
 
