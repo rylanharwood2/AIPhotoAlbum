@@ -44,7 +44,7 @@ async function analyzeGroup(group) {
   if (!canProceed) throw new Error('RATE_LIMIT_EXCEEDED')
 
   const imageContent = group.slice(0, 4).flatMap(photo => [
-    { type: 'image', source: { type: 'url', url: photo.cloudinaryUrl } },
+    { type: 'image', source: { type: 'url', url: photo.cloudinaryUrl.replace('/upload/', '/upload/w_1600,c_limit/') } },
     { type: 'text', text: `Photo ID: ${photo.id}` },
   ])
 
@@ -121,7 +121,7 @@ async function curateSelection(photos, tripName) {
 
 async function curateBatch(photos, tripName, maxCount = 25) {
   const imageContent = photos.flatMap((photo, i) => [
-    { type: 'image', source: { type: 'url', url: photo.cloudinaryUrl } },
+    { type: 'image', source: { type: 'url', url: photo.cloudinaryUrl.replace('/upload/', '/upload/w_1600,c_limit/') } },
     {
       type: 'text',
       text: `Photo ID: ${photo.id}, filename: ${photo.filename}, taken: ${photo.takenAt ? new Date(photo.takenAt).toLocaleString() : 'unknown'}`,
