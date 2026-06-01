@@ -37,11 +37,11 @@ function TripCreator({ onCreated, onCancel }) {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="label">Start date <span className="text-film-border normal-case">(optional)</span></label>
+            <label className="label">Start date <span className="text-film-border normal-case">(optional, for sorting)</span></label>
             <input className="input" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
           </div>
           <div>
-            <label className="label">End date <span className="text-film-border normal-case">(optional)</span></label>
+            <label className="label">End date <span className="text-film-border normal-case">(optional, for sorting)</span></label>
             <input className="input" type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
           </div>
         </div>

@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
     .from('trips')
     .select('*')
     .eq('user_id', req.user.id)
-    .order('created_at', { ascending: false })
+    .order('start_date', { ascending: false, nullsFirst: true })
 
   if (error) return res.status(500).json({ error: error.message })
   res.json(trips)

@@ -42,17 +42,12 @@ export default function AnalysisScreen({ trip, onComplete, onBack }) {
   const [curatedPhotos, setCuratedPhotos] = useState([])
   const logRef = useRef(null)
   const analysisRef = useRef(false)
+  const [started, setStarted] = useState(false)
 
   const addLog = (text, status = 'done') => {
     setLog(prev => [...prev, { text, status, id: Date.now() + Math.random() }])
     setTimeout(() => logRef.current?.scrollTo({ top: 9999, behavior: 'smooth' }), 50)
   }
-
-  useEffect(() => {
-    if (analysisRef.current) return
-    analysisRef.current = true
-    startAnalysis()
-  }, [])
 
   const startAnalysis = () => {
     // runAnalysis returns an EventSource (server-sent events stream)
@@ -100,13 +95,24 @@ export default function AnalysisScreen({ trip, onComplete, onBack }) {
             ← {trip.name}
           </button>
           <h2 className="font-display text-3xl text-film-cream">
-            {done ? 'Curation complete' : 'Analyzing…'}
+            {done ? 'Curation complete' : started ? 'Analyzing…' : 'Ready to curate'}
           </h2>
           <p className="text-film-muted text-sm mt-1">
-            {done ? 'Review your curated selection below' : 'Claude is reviewing your photos — this may take a few minutes'}
+            {done
+              ? 'Review your curated selection below'
+              : started
+              ? 'Claude is reviewing your photos — this may take a few minutes'
+              : 'Claude will select the best photos from your trip'}
           </p>
         </div>
-        {done && <button onClick={onComplete} className="btn-primary mt-6">Download album →</button>}
+        {!started && !done && (
+          <button onClick={() => { setStarted(true); startAnalysis() }} className="btn-primary mt-6">
+            Start curation →
+          </button>
+        )}
+        {done && (
+          <button onClick={onComplete} className="btn-primary mt-6">Download album →</button>
+        )}
       </div>
 
       <div ref={logRef} className="space-y-1.5 mb-8 max-h-64 overflow-y-auto">
