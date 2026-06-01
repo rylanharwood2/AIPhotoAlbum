@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getPhotos, uploadPhotosFromDisk, importFromPicker, getAnalysis } from '../utils/api.js'
+import { getPhotos, uploadPhotosFromDisk, importFromPicker, getAnalysis, getToken } from '../utils/api.js'
 import { openGooglePhotosPicker } from '../utils/picker.js'
 
 export default function PhotosScreen({ trip, onBack, onStartAnalysis, onViewAlbum }) {
@@ -53,9 +53,15 @@ export default function PhotosScreen({ trip, onBack, onStartAnalysis, onViewAlbu
     setUploading(true)
     setUploadProgress('Opening Google Photos picker…')
     try {
+      const token = getToken()
       const res = await fetch(
         `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/auth/google-token`,
-        { credentials: 'include' }
+        {
+          credentials: 'include',
+          headers: {
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        }
       )
       const { accessToken } = await res.json()
       setUploadProgress('Waiting for photo selection…')
