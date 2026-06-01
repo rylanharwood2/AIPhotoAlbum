@@ -28,27 +28,6 @@ router.use(async (req, res, next) => {
 
 router.use(requireAuth)
 
-// Get saved analysis for a trip
-router.get('/:tripId', async (req, res) => {
-  const { data: trip } = await supabase
-    .from('trips')
-    .select('id')
-    .eq('id', req.params.tripId)
-    .eq('user_id', req.user.id)
-    .single()
-
-  if (!trip) return res.status(404).json({ error: 'Trip not found' })
-
-  const { data: curatedPhotos } = await supabase
-    .from('photos')
-    .select('*')
-    .eq('trip_id', req.params.tripId)
-    .eq('is_curated', true)
-    .order('curation_order', { ascending: true })
-
-  res.json({ curatedPhotos: curatedPhotos || [] })
-})
-
 // Run Claude analysis on a trip's photos
 // Returns SSE stream so the frontend can show live progress
 router.get('/:tripId/run', async (req, res) => {
@@ -234,6 +213,27 @@ router.get('/:tripId/download', async (req, res) => {
   res.setHeader('Content-Type', 'application/zip')
   res.setHeader('Content-Disposition', `attachment; filename="${safeName}.zip"`)
   res.send(blob)
+})
+
+// Get saved analysis for a trip
+router.get('/:tripId', async (req, res) => {
+  const { data: trip } = await supabase
+    .from('trips')
+    .select('id')
+    .eq('id', req.params.tripId)
+    .eq('user_id', req.user.id)
+    .single()
+
+  if (!trip) return res.status(404).json({ error: 'Trip not found' })
+
+  const { data: curatedPhotos } = await supabase
+    .from('photos')
+    .select('*')
+    .eq('trip_id', req.params.tripId)
+    .eq('is_curated', true)
+    .order('curation_order', { ascending: true })
+
+  res.json({ curatedPhotos: curatedPhotos || [] })
 })
 
 module.exports = router

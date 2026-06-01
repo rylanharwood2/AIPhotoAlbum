@@ -11,6 +11,7 @@ const photosRoutes = require('./routes/photos')
 const analyzeRoutes = require('./routes/analyze')
 
 const app = express()
+app.set('trust proxy', 1)
 const PORT = process.env.PORT || 3001
 
 // Basic abuse protection — limit requests per IP
